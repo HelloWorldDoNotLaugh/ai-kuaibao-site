@@ -52,7 +52,9 @@ def google_news_rss_url(query: str) -> str:
 
 
 def strip_html(value: str) -> str:
-    value = re.sub(r"<[^>]+>", " ", value or "")
+    value = html.unescape(value or "")
+    value = value.replace("\xa0", " ")
+    value = re.sub(r"<[^>]+>", " ", value)
     value = re.sub(r"\s+", " ", value)
     return value.strip()
 
@@ -64,11 +66,15 @@ def normalize_title(title: str) -> str:
     return title.strip()
 
 
-def clean_summary(summary: str, title: str) -> str:
+def clean_summary(summary: str, title: str, source: str) -> str:
     text = strip_html(summary)
     if not text:
         return f"这条动态和 {title} 相关，值得关注后续进展。"
     text = text.replace(title, "").strip(" -:：")
+    if source and text.endswith(source):
+        text = text[: -len(source)].rstrip(" -:：")
+    if text == title or len(text) < 12:
+        return f"这条动态和 {title} 相关，值得关注后续进展。"
     if len(text) > 120:
         text = text[:117].rstrip() + "..."
     return text or f"这条动态和 {title} 相关，值得关注后续进展。"
@@ -107,10 +113,10 @@ def parse_feed(topic: str, query: str) -> list[NewsItem]:
             source = raw_source.get("title") or source
         elif hasattr(raw_source, "get"):
             source = raw_source.get("title") or source
-        summary = clean_summary(entry.get("summary", ""), title)
         link = entry.get("link", "").strip()
         if not link:
             continue
+        summary = clean_summary(entry.get("summary", ""), title, source)
         items.append(
             NewsItem(
                 topic=topic,
@@ -219,19 +225,49 @@ def render_index_html(now: datetime, latest_name: str, items: list[NewsItem]) ->
     archive_items = []
     for path in report_links[:30]:
         archive_items.append(
-            f'<li><a href="reports/{html.escape(path.name)}">{html.escape(path.stem)}</a></li>'
-        )
-
-    preview = []
-    for item in items[:5]:
-        preview.append(
             f"""
-      <li>
-        <span>{html.escape(item.topic)}</span>
-        <a href="{html.escape(item.link)}" target="_blank" rel="noreferrer">{html.escape(item.title)}</a>
-      </li>
+        <li>
+          <a href="reports/{html.escape(path.name)}">{html.escape(path.stem)}</a>
+          <span>{html.escape(path.stem.split('_')[0])}</span>
+        </li>
 """
         )
+
+    lead_item = items[0]
+    side_items = items[1:5]
+    latest_items = items[5:10]
+
+    side_html = []
+    for item in side_items:
+        side_html.append(
+            f"""
+        <article class="brief-card">
+          <div class="brief-topic">{html.escape(item.topic)}</div>
+          <h3><a href="{html.escape(item.link)}" target="_blank" rel="noreferrer">{html.escape(item.title)}</a></h3>
+          <p>{html.escape(item.summary)}</p>
+          <div class="card-meta">{html.escape(item.source)} · {item.published.strftime('%m-%d %H:%M')}</div>
+        </article>
+"""
+        )
+
+    latest_html = []
+    for item in latest_items:
+        latest_html.append(
+            f"""
+        <article class="news-card">
+          <div class="news-head">
+            <span class="news-topic">{html.escape(item.topic)}</span>
+            <span class="card-meta">{item.published.strftime('%m-%d %H:%M')}</span>
+          </div>
+          <h3><a href="{html.escape(item.link)}" target="_blank" rel="noreferrer">{html.escape(item.title)}</a></h3>
+          <p>{html.escape(item.summary)}</p>
+          <div class="card-meta">{html.escape(item.source)}</div>
+        </article>
+"""
+        )
+
+    topic_count = len({item.topic for item in items})
+    report_count = len(report_links)
 
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -245,27 +281,78 @@ def render_index_html(now: datetime, latest_name: str, items: list[NewsItem]) ->
   <main class="wrap">
     <section class="hero">
       <div class="eyebrow">AI 快报网站</div>
-      <h1>每天上午 10 点更新</h1>
-      <p class="sub">Asia/Shanghai 定时生成 · HTML 静态站点 · 适合 GitHub Pages</p>
-      <p class="lead">这里会持续生成每日 AI 快报页面，只保留 HTML 产物，适合直接发布到 GitHub Pages。</p>
+      <h1>每天上午 10 点，自动更新一份 AI 资讯首页</h1>
+      <p class="sub">Asia/Shanghai 定时生成 · HTML 静态站点 · GitHub Pages 在线访问</p>
+      <p class="lead">聚焦 <code>Claude</code>、<code>Cursor</code>、<code>OpenClaw</code>、<code>agent</code> 和 <code>skill</code>，每天筛一版值得快速浏览的 AI 动态。</p>
       <div class="hero-actions">
         <a class="button" href="reports/{html.escape(latest_name)}">查看最新快报</a>
+        <a class="button secondary" href="#archive">查看历史归档</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <strong>10</strong>
+          <span>每日精选</span>
+        </div>
+        <div class="stat-card">
+          <strong>{topic_count}</strong>
+          <span>覆盖主题</span>
+        </div>
+        <div class="stat-card">
+          <strong>{report_count}</strong>
+          <span>已生成期数</span>
+        </div>
+        <div class="stat-card">
+          <strong>{now.strftime('%H:%M')}</strong>
+          <span>最近更新</span>
+        </div>
       </div>
     </section>
 
-    <section class="panel">
-      <h2>本期预览</h2>
-      <ul class="preview-list">
-        {''.join(preview)}
-      </ul>
+    <section class="section-title">
+      <div>
+        <div class="eyebrow">Today</div>
+        <h2>今日焦点</h2>
+      </div>
+      <a class="section-link" href="reports/{html.escape(latest_name)}">进入完整快报</a>
     </section>
 
-    <section class="panel">
-      <h2>归档</h2>
+    <section class="news-layout">
+      <article class="featured-card">
+        <div class="featured-topic">{html.escape(lead_item.topic)}</div>
+        <h2><a href="{html.escape(lead_item.link)}" target="_blank" rel="noreferrer">{html.escape(lead_item.title)}</a></h2>
+        <p>{html.escape(lead_item.summary)}</p>
+        <div class="card-meta">{html.escape(lead_item.source)} · {lead_item.published.strftime('%m-%d %H:%M')}</div>
+        <a class="inline-link" href="{html.escape(lead_item.link)}" target="_blank" rel="noreferrer">查看原文</a>
+      </article>
+
+      <div class="brief-list">
+        {''.join(side_html)}
+      </div>
+    </section>
+
+    <section class="section-title">
+      <div>
+        <div class="eyebrow">Latest</div>
+        <h2>最新快讯</h2>
+      </div>
+      <span class="section-note">更适合快速扫一遍当天热点</span>
+    </section>
+
+    <section class="news-grid">
+      {''.join(latest_html)}
+    </section>
+
+    <section class="panel archive-panel" id="archive">
+      <div class="archive-head">
+        <div>
+          <div class="eyebrow">Archive</div>
+          <h2>历史归档</h2>
+        </div>
+        <p class="note">最近更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}</p>
+      </div>
       <ul class="archive-list">
         {''.join(archive_items)}
       </ul>
-      <p class="note">最近更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}</p>
     </section>
   </main>
 </body>
