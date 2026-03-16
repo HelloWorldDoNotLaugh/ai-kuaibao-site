@@ -1,0 +1,220 @@
+:root {
+  --bg: #0a0f1b;
+  --panel: rgba(18, 26, 49, 0.9);
+  --panel-2: rgba(13, 19, 37, 0.92);
+  --text: #eaf0ff;
+  --muted: #a9b6db;
+  --line: #273156;
+  --accent: #74d0ff;
+  --accent-2: #8bffb3;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(116, 208, 255, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(139, 255, 179, 0.12), transparent 26%),
+    linear-gradient(180deg, #0a0f1b 0%, #070c14 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  line-height: 1.7;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 36px 20px 72px;
+}
+
+.hero,
+.panel,
+.signals,
+.item {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+
+.hero,
+.panel,
+.signals {
+  padding: 28px;
+}
+
+.hero {
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: rgba(116, 208, 255, 0.12);
+  font-size: 13px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.2;
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-size: 24px;
+}
+
+.sub {
+  margin: 12px 0 10px;
+  color: var(--muted);
+}
+
+.lead {
+  margin: 0;
+  font-size: 18px;
+}
+
+code {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(116, 208, 255, 0.12);
+  color: var(--accent);
+  font-size: 0.95em;
+}
+
+.hero-actions,
+.grid {
+  margin-top: 22px;
+}
+
+.button,
+.home-link,
+.item a,
+.archive-list a,
+.preview-list a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.button {
+  display: inline-block;
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: rgba(116, 208, 255, 0.14);
+  border: 1px solid rgba(116, 208, 255, 0.24);
+}
+
+.button:hover,
+.home-link:hover,
+.item a:hover,
+.archive-list a:hover,
+.preview-list a:hover {
+  text-decoration: underline;
+}
+
+.panel {
+  margin-top: 22px;
+}
+
+.preview-list,
+.archive-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.preview-list li,
+.archive-list li {
+  margin: 10px 0;
+}
+
+.preview-list span {
+  display: inline-block;
+  min-width: 70px;
+  margin-right: 8px;
+  color: var(--accent-2);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.item {
+  padding: 22px;
+}
+
+.pill {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(139, 255, 179, 0.1);
+  color: var(--accent-2);
+  font-size: 13px;
+}
+
+.item h2 {
+  margin: 0 0 8px;
+  font-size: 23px;
+  line-height: 1.35;
+}
+
+.item p {
+  margin: 0 0 12px;
+}
+
+.meta,
+.note {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.signals {
+  margin-top: 22px;
+}
+
+.signals ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.signals li {
+  margin: 8px 0;
+}
+
+@media (max-width: 720px) {
+  .wrap {
+    padding: 18px 14px 48px;
+  }
+
+  .hero,
+  .panel,
+  .signals,
+  .item {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  h2,
+  .item h2 {
+    font-size: 20px;
+  }
+
+  .lead {
+    font-size: 16px;
+  }
+}
